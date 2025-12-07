@@ -1,7 +1,5 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
-import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
-import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 import { SharedArray } from "k6/data";
 import papaparse from "https://jslib.k6.io/papaparse/5.1.1/index.js";
 import { GetHttpHeader } from "/Users/ar667468/Desktop/possawee/demo-k6/assets/js/helper.js";
@@ -58,15 +56,3 @@ export default () => {
         console.error(`Request for account ${randomPocket.AccountID} failed. Status: ${response.status}, Body: ${response.body}`);
     }
 };
-
-export function handleSummary(data) {
-    const runId = __ENV.RUN_ID || "NO-RUN-ID";
-    return {
-        [`/account/tmp/report-${runId}.html`]: htmlReport(data),
-        [`/account/tmp/report-${runId}.txt`]: textSummary(data, {
-            indent: " ",
-            enableColors: false,
-        }),
-        stdout: textSummary(data, { indent: " ", enableColors: true }),
-    };
-}

@@ -1,19 +1,3 @@
-# === All Command ===
-#
-# make smoke_test
-# make step_test
-# make stress_test
-#
-# make fetch_metrics_all
-# make fetch_metrics_service_cpu
-# make fetch_metrics_service_memory
-# make fetch_metrics_db_cpu
-# make fetch_metrics_redis_cpu
-# make get_resources
-
-
-
-
 define get_config
 $(shell jq -r '."$(1)"' makefile.json)
 endef
@@ -30,153 +14,39 @@ endef
 #--------------------------------------------------------
 # [CONFIGURABLE]
 #--------------------------------------------------------
-V_NGINX_NAME := $(call get_config,V_NGINX_NAME)
-V_ENV        := $(call get_config,V_ENV)
-V_S3_BUCKET := $(call get_config,V_S3_BUCKET)
-V_S3_PREFIX := $(call get_config,V_S3_PREFIX)
-V_AWS_ACCESS_KEY_ID := $(call get_config,V_AWS_ACCESS_KEY_ID)
-V_AWS_SECRET_ACCESS_KEY := $(call get_config,V_AWS_SECRET_ACCESS_KEY)
-V_AWS_REGION := $(call get_config,V_AWS_REGION)
-
-
-
-#--------------------------------------------------------
-# [DO NOT CHANGE]
-#--------------------------------------------------------
-.PHONY: smoke_test step_test stress_test upload_stress_to_s3
-C_REL_PATH := $(shell pwd | sed -n 's|.*\(account-k6-mvp1.0/.*\)|\1|p')
-C_REL_PATH_NO_ROOT := $(shell echo $(C_REL_PATH) | sed 's|^account-k6-mvp1.0/||')
-C_REL_PATH_DIST := $(shell pwd | sed -n 's|.*\(account-k6-mvp1.0/\)\(.*\)|\1dist/\2|p')
-C_REL_PATH_DIST_NO_SRC := $(shell pwd | sed -n 's|.*\(account-k6-mvp1.0/\)\(src/\)\(.*\)|\1dist/\3|p')
-C_RUN_ID := $(shell uuidgen)
-C_TIMESTAMP := $(shell date "+%Y-%m-%dT%H-%M-%S")
-C_PROJECT_ROOT := $(shell git rev-parse --show-toplevel)
-
+V_ENV := $(call get_config,V_ENV)
 
 #--------------------------------------------------------
 # [DO NOT CHANGE] SMOKE TEST
 #--------------------------------------------------------
 smoke_test:
-	@if [ "$(V_ENV)" = "local" ]; then \
-		FILE_PATH="smoke_test.js"; \
-		npm run bundle; \
-		k6 run $$FILE_PATH; \
-	else \
-		FILE_PATH="smoke_test.js"; \
-		DEST_FOLDER="account/$(C_REL_PATH_DIST_NO_SRC)/smoke_test/$(C_TIMESTAMP)"; \
-		cd $(C_PROJECT_ROOT) && npm run bundle; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- mkdir -p account/$(C_REL_PATH_DIST_NO_SRC); \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- mkdir -p /account/data; \
-		kubectl cp $(C_PROJECT_ROOT)/assets/go/account-data/accounts.csv default/$(V_NGINX_NAME):/account/data/accounts.csv; \
-		kubectl cp $(C_REL_PATH_DIST_NO_SRC_NO_ROOT)/$$FILE_PATH default/$(V_NGINX_NAME):account/$(C_REL_PATH_DIST_NO_SRC); \
-		kubectl exec -i -t -n default $(V_NGINX_NAME) -c nginx -- \
-		env RUN_ID=$(C_RUN_ID) k6 run account/$(C_REL_PATH_DIST_NO_SRC)/$$FILE_PATH; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- \
-		mkdir -p $$DEST_FOLDER; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- \
-		cp account/tmp/report-$(C_RUN_ID).html $$DEST_FOLDER/01-k6-report.html; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- \
-		cp account/tmp/report-$(C_RUN_ID).txt $$DEST_FOLDER/02-k6-report.txt; \
-		cd $(C_REL_PATH_NO_ROOT) && mkdir -p ./smoke_test/$(C_TIMESTAMP); \
-		kubectl cp default/$(V_NGINX_NAME):$$DEST_FOLDER ./smoke_test/$(C_TIMESTAMP); \
-		$(MAKE) utils_create_run_id_file; \
-		$(MAKE) utils_create_complete_time_file; \
-		$(MAKE) utils_extract_options FILE=smoke_test.js; \
-	fi
+	@echo "Running smoke test in $(V_ENV) environment..."
+	FILE_PATH="smoke_test.js"; \
+	npm run bundle; \
+	k6 run $$FILE_PATH; \
 
 
 #--------------------------------------------------------
 # [DO NOT CHANGE] STEP TEST
 #--------------------------------------------------------
 step_test:
-	@if [ "$(V_ENV)" = "local" ]; then \
-		FILE_PATH="step_test.js"; \
-		npm run bundle; \
-		k6 run $$FILE_PATH; \
-	else \
-		FILE_PATH="step_test.js"; \
-		DEST_FOLDER="account/$(C_REL_PATH_DIST_NO_SRC)/step_test/$(C_TIMESTAMP)"; \
-		cd $(C_PROJECT_ROOT) && npm run bundle; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- mkdir -p account/$(C_REL_PATH_DIST_NO_SRC); \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- mkdir -p /account/data; \
-		kubectl cp $(C_PROJECT_ROOT)/assets/go/account-data/accounts.csv default/$(V_NGINX_NAME):/account/data/accounts.csv; \
-		kubectl cp $(C_REL_PATH_DIST_NO_SRC_NO_ROOT)/$$FILE_PATH default/$(V_NGINX_NAME):account/$(C_REL_PATH_DIST_NO_SRC); \
-		kubectl exec -i -t -n default $(V_NGINX_NAME) -c nginx -- \
-		env RUN_ID=$(C_RUN_ID) k6 run account/$(C_REL_PATH_DIST_NO_SRC)/$$FILE_PATH; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- \
-		mkdir -p $$DEST_FOLDER; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- \
-		cp account/tmp/report-$(C_RUN_ID).html $$DEST_FOLDER/01-k6-report.html; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- \
-		cp account/tmp/report-$(C_RUN_ID).txt $$DEST_FOLDER/02-k6-report.txt; \
-		cd $(C_REL_PATH_NO_ROOT) && mkdir -p ./step_test/$(C_TIMESTAMP); \
-		kubectl cp default/$(V_NGINX_NAME):$$DEST_FOLDER ./step_test/$(C_TIMESTAMP); \
-		$(MAKE) utils_create_run_id_file; \
-		$(MAKE) utils_create_complete_time_file; \
-		$(MAKE) utils_extract_options FILE=step_test.js; \
-	fi
+	@echo "Running step test in $(V_ENV) environment..."
+	FILE_PATH="step_test.js"; \
+	npm run bundle; \
+	k6 run $$FILE_PATH;
 
 
 #--------------------------------------------------------
 # [DO NOT CHANGE] STRESS TEST
 #--------------------------------------------------------
 stress_test:
-	@if [ "$(V_ENV)" = "local" ]; then \
-		FILE_PATH="stress_test.js"; \
-		npm run bundle; \
-		k6 run $$FILE_PATH; \
-	else \
-		FILE_PATH="stress_test.js"; \
-		DEST_FOLDER="account/$(C_REL_PATH_DIST_NO_SRC)/stress_test/$(C_TIMESTAMP)"; \
-		cd $(C_PROJECT_ROOT) && npm run bundle; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- mkdir -p account/$(C_REL_PATH_DIST_NO_SRC); \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- mkdir -p /account/data; \
-		kubectl cp $(C_PROJECT_ROOT)/assets/go/account-data/accounts.csv default/$(V_NGINX_NAME):/account/data/accounts.csv; \
-		kubectl cp $(C_REL_PATH_DIST_NO_SRC_NO_ROOT)/$$FILE_PATH default/$(V_NGINX_NAME):account/$(C_REL_PATH_DIST_NO_SRC); \
-		kubectl exec -i -t -n default $(V_NGINX_NAME) -c nginx -- \
-		env RUN_ID=$(C_RUN_ID) k6 run account/$(C_REL_PATH_DIST_NO_SRC)/$$FILE_PATH; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- \
-		mkdir -p $$DEST_FOLDER; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- \
-		cp account/tmp/report-$(C_RUN_ID).html $$DEST_FOLDER/01-k6-report.html; \
-		kubectl exec -n default $(V_NGINX_NAME) -c nginx -- \
-		cp account/tmp/report-$(C_RUN_ID).txt $$DEST_FOLDER/02-k6-report.txt; \
-		cd $(C_REL_PATH_NO_ROOT) && mkdir -p ./stress_test/$(C_TIMESTAMP); \
-		kubectl cp default/$(V_NGINX_NAME):$$DEST_FOLDER ./stress_test/$(C_TIMESTAMP); \
-		$(MAKE) utils_create_run_id_file; \
-		$(MAKE) utils_create_complete_time_file; \
-		$(MAKE) utils_extract_options FILE=stress_test.js; \
-	fi
+	@echo "Running stress test in $(V_ENV) environment..."
+	FILE_PATH="stress_test.js"; \
+	npm run bundle; \
+	k6 run $$FILE_PATH; \
 
 
 
-
-
-
-
-
-
-
-#########################################################
-#     __    __                                          #
-#    /  \  /  \      ____                  _            #
-#   /    \/    \    / ___| _ __ __ _ _ __ | |__         #
-#   \          /   | |  _ | '__/ _` | '_ \| '_ \        #
-#    \        /    | |_| || | | (_| | |_) | | | |       #
-#     \__/\__/      \____||_|  \__,_| .__/|_| |_|       #
-#                                    |_|                #
-#########################################################
-#--------------------------------------------------------
-# [CONFIGURABLE]
-#--------------------------------------------------------
-V_PROFILE        := $(call get_config,V_PROFILE)
-V_REGION         := $(call get_config,V_REGION)
-V_CLUSTER_NAME   := $(call get_config,V_CLUSTER_NAME)
-V_NAMESPACE      := $(call get_config,V_NAMESPACE)
-V_SERVICE        := $(call get_config,V_SERVICE)
-V_DB_INSTANCE    := $(call get_config,V_DB_INSTANCE)
-V_REDIS_INSTANCE := $(call get_config,V_REDIS_INSTANCE)
-V_WAIT_TIME      := $(call get_config,V_WAIT_TIME)
 
 
 #===================================================
