@@ -39,6 +39,7 @@ This repo demonstrates how to:
 
 3. Prepare k6
    ```sh
+   cd src &&
    make prerequisite
    ```
 
