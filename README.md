@@ -45,13 +45,11 @@ This repo demonstrates how to:
 
 4. Start smoke test
    ```sh
-   cd src &&
    make smoke_test
    ```
 
 5. Start stress test
    ```sh
-   cd src &&
    make stress_test
    ```
 
