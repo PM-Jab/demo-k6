@@ -2,7 +2,7 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 import { SharedArray } from "k6/data";
 import papaparse from "https://jslib.k6.io/papaparse/5.1.1/index.js";
-import { GetHttpHeader } from "/Users/ar667468/Desktop/possawee/demo-k6/assets/js/helper.js";
+import { GetHttpHeader } from "../assets/js/helper.js";
 
 export const options = {
     scenarios: {
