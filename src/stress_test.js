@@ -41,7 +41,7 @@ export default () => {
     };
 
     const response = http.post(
-        "http://localhost:3000/demo",
+        "http://127.0.0.1:6000/demo",
         JSON.stringify(reqBody),
         reqHeader
     );
