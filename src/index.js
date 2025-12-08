@@ -1,18 +1,13 @@
 const express = require('express')
 const app = express()
-const port = 3000
+const port = 6000
 
 app.post('/demo', (req, res) => {
-  const response = {
-    code: "5000",
-    message: "failure"
-  }
-
-  if (req.body.username != "") {
-    response.code = "0000"
-    response.message = "success"
-  }
-  res.send(response)
+  console.log('Received a POST request at /demo')
+  res.send({
+    code: "0000",
+    message: "success"
+  })
 })
 
 app.listen(port, () => {

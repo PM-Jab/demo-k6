@@ -7,7 +7,7 @@ import { GetHttpHeader } from "/Users/ar667468/Desktop/possawee/demo-k6/assets/j
 export const options = {
   vus: 5,
   iterations: 5,
-  duration: "10m",
+  duration: "1m",
   summaryTrendStats: ["avg", "med", "min", "max", "p(90)", "p(95)", "p(99)"],
 };
 
@@ -31,7 +31,7 @@ export default () => {
     timeout: "30s",
   };
 
-  const response = http.post("http://localhost:10006/demo", JSON.stringify(reqBody), reqHeader);
+  const response = http.post("http://127.0.0.1:6000/demo", JSON.stringify(reqBody), reqHeader);
 
   // check response
   check(response, {
