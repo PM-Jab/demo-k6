@@ -6,7 +6,7 @@ import { GetHttpHeader } from "../assets/js/helper.js";
 
 export const options = {
   vus: 5,
-  iterations: 5,
+  iterations: 100,
   duration: "1m",
   summaryTrendStats: ["avg", "med", "min", "max", "p(90)", "p(95)", "p(99)"],
 };

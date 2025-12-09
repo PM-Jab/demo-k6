@@ -9,10 +9,10 @@ export const options = {
         achieve_target_tps: {
             executor: 'ramping-arrival-rate',
             timeUnit: '1s',
-            preAllocatedVUs: 10,
+            preAllocatedVUs: 2,
             stages: [
-                { duration: '1m', target: 10 },
-                { duration: '5m', target: 10 },
+                { duration: '1m', target: 1 },
+                { duration: '2m', target: 2 },
                 { duration: '1m', target: 0 },
             ],
         },
